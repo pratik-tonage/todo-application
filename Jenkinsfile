@@ -2,11 +2,12 @@ pipeline{
     agent any
     environment {
         DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
+        DOCKER_IMAGE = 'todo-application-image:latest'
     }
     stages{
         stage('Clone Repository'){
             steps{
-                git branch: 'main', url: 'https://github.com/pratiktonage/todo-application'
+                git branch: 'master', url: 'https://github.com/pratik-tonage/todo-application'
             }
         }        
         
@@ -25,8 +26,8 @@ pipeline{
         stage('Push Docker Images to Docker Hub'){
             steps{
                 sh 'docker login -u $DOCKER_HUB_CREDENTIALS_USR' -p $DOCKER_HUB_CREDENTIALS_PSW'
-                sh 'docker tag todo-application-image:latest pratikt2711/todo-application:latest'
-                sh 'docker push pratikt2711/todo-application:latest'
+                sh 'docker tag todo-application-image:latest pratik2312/todo-application:latest'
+                sh 'docker push pratik2312/todo-application:latest'
             }
         }
         
