@@ -7,59 +7,58 @@ pipeline{
     stages{
         stage('Clone Repository'){
             steps{
-                git branch: 'master', url: 'https://github.com/pratik-tonage/todo-application'
-            }
-        }        
-        
+                script {
+                    sh 'git clone https://github.com/pratik-tonage/todo-application.git'
+                }
+            }        
+        }
         stage('Build with Maven'){
             steps{
-                sh 'mvn clean package -DskipTests'
-            }
-        }   
-        
+                script {
+                     sh 'mvn clean package -DskipTests'
+                }
+            }   
+        }
         stage('Build Docker Image'){
             steps{
-                sh 'docker build -t todo-application-image:latest .'
+                script {
+                     sh 'docker build -t todo-application-image:latest .'
+                }
             }
-        }   
-        
+        }       
         stage('Push Docker Images to Docker Hub'){
             steps{
-                sh 'docker login -u $DOCKER_HUB_CREDENTIALS_USR' -p $DOCKER_HUB_CREDENTIALS_PSW'
-                sh 'docker tag todo-application-image:latest pratik2312/todo-application:latest'
-                sh 'docker push pratik2312/todo-application:latest'
+                script {
+                    withCredentials([usernamePassword(credentialsID: DOCKER_HUB_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    sh 'docker push $DOCKER_IMAGE'
+                    }
+                }
             }
-        }
-        
+        }    
         stage('Deploy with Docker Compose'){
             steps{
-                sh 'docker compose up -d'
-            }
-        }   
-            
+                script {
+                     sh 'docker compose up -d'
+                }
+            }    
+        }    
         stage('Verify Services'){
             steps{
-                sh 'docker ps'
-            }
-        }      
-        
+                script {
+                     sh 'docker ps'
+                }
+            }      
+        }
         stage('Clean Workspace'){
             steps{
-                sh 'rm -rf *'
-            }
-        }    
-    }
-    
-    post {
-        success {
-            echo 'Build and Deployment Successful'
+                script {
+                     sh 'rm -rf *'
+                }
+            }    
         }
-        failure {
-            echo 'Build or Deployment failed!'
-        }    
-    }
-}            
-        
+    }        
+}        
         
             
             
