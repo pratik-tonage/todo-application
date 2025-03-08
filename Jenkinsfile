@@ -1,7 +1,6 @@
 pipeline{
     agent any
     environment {
-        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
         DOCKER_IMAGE = 'todo-application-image:latest'
     }
     stages{
@@ -9,29 +8,31 @@ pipeline{
             steps{
                 script {
                     sh 'git clone https://github.com/pratik-tonage/todo-application.git'
+                    sh 'cd todo-application'
                 }
             }        
         }
         stage('Build with Maven'){
             steps{
                 script {
-                     sh 'mvn clean package -DskipTests'
+                     sh 'cd todo-application && mvn clean package -DskipTests'
                 }
             }   
         }
         stage('Build Docker Image'){
             steps{
                 script {
-                     sh 'docker build -t todo-application-image:latest .'
+                     sh 'cd todo-application && docker build -t todo-application-image:latest .'
                 }
             }
         }       
         stage('Push Docker Images to Docker Hub'){
             steps{
                 script {
-                    withCredentials([usernamePassword(credentialsID: DOCKER_HUB_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                    sh 'docker push $DOCKER_IMAGE'
+                    sh 'docker tag $DOCKER_IMAGE $DOCKER_USER/$DOCKER_IMAGE'
+                    sh 'docker push $DOCKER_USER/$DOCKER_IMAGE'
                     }
                 }
             }
@@ -39,14 +40,14 @@ pipeline{
         stage('Deploy with Docker Compose'){
             steps{
                 script {
-                     sh 'docker compose up -d'
+                     sh 'cd todo-application && docker compose up -d'
                 }
             }    
         }    
         stage('Verify Services'){
             steps{
                 script {
-                     sh 'docker ps'
+                     sh 'docker ps -a'
                 }
             }      
         }
